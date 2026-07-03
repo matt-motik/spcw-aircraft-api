@@ -54,6 +54,7 @@ class AeroplanesAPI(BaseAPI):
 
         try:
             bbox = data[0]['boundingbox']
+            print(bbox)
             return {
                 'lamin': float(bbox[0]),  # south (минимальная широта)
                 'lamax': float(bbox[1]),  # north (максимальная широта)

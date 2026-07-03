@@ -77,7 +77,7 @@ class Aeroplane:
         self._icao24 = clean.upper()
 
     @property
-    def callsign(self) -> str :
+    def callsign(self) -> str:
         """Позывной рейса."""
         return self._callsign
 
@@ -101,8 +101,7 @@ class Aeroplane:
         """Сеттер. Страна регистрации."""
         if not isinstance(value, str):
             raise TypeError("origin_country должен быть строкой.")
-        clean = value.strip()
-        self._origin_country = clean.upper()
+        self._origin_country = value.strip()
 
     @property
     def longitude(self) -> float | None:
@@ -197,6 +196,26 @@ class Aeroplane:
             return NotImplemented
         return (self.altitude, self.velocity) < (other.altitude, other.velocity)
 
+    @staticmethod
+    def _decimal_to_dms(decimal_degrees: float | None, is_latitude: bool = True) -> str:
+        """Преобразует десятичные градусы в строку вида 55°45′6″N."""
+        if decimal_degrees is None:
+            return "N/A"
+
+        # Определяем направление
+        if is_latitude:
+            direction = "N" if decimal_degrees >= 0 else "S"
+        else:
+            direction = "E" if decimal_degrees >= 0 else "W"
+
+        absolute = abs(decimal_degrees)
+        degrees = int(absolute)
+        minutes_full = (absolute - degrees) * 60
+        minutes = int(minutes_full)
+        seconds = (minutes_full - minutes) * 60
+
+        return f"{degrees}°{minutes}′{seconds:.0f}″{direction}"
+
     # ---------- строковое представление ----------
     def __repr__(self) -> str:
         return (
@@ -204,6 +223,22 @@ class Aeroplane:
             f"origin_country={self.origin_country!r}, longitude={self.longitude}, "
             f"latitude={self.latitude}, altitude={self.altitude}, "
             f"velocity={self.velocity}, on_ground={self.on_ground})"
+        )
+
+    def __str__(self) -> str:
+        status = "на земле" if self.on_ground else "в воздухе"
+        lon_str = self._decimal_to_dms(self.longitude, is_latitude=False) if self.longitude is not None else "N/A"
+        lat_str = self._decimal_to_dms(self.latitude, is_latitude=True) if self.latitude is not None else "N/A"
+
+        return (
+            f"ICAO24 {self.icao24 or 'N/A'} | "
+            f"Рейс {self.callsign or 'N/A'} | "
+            f"Страна: {self.origin_country} | "
+            f"Долгота: {lon_str} | "
+            f"Широта: {lat_str} | "
+            f"Высота: {self.altitude:.0f} м | "
+            f"Скорость: {self.velocity:.0f} м/с | "
+            f"Статус: {status}"
         )
 
     # ---------- фабричный метод ----------

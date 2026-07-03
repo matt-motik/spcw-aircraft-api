@@ -51,6 +51,30 @@ class JsonStorage(BaseStorage):
             self._storage.append(aeroplane)  # добавление нового
         self._save()
 
+    def add_multiple_aeroplanes(self, aeroplanes: list[Aeroplane]) -> None:
+        """
+        Пакетное добавление/обновление списка самолётов с однократным сохранением.
+
+        Args:
+            aeroplanes: Список объектов Aeroplane.
+
+        Raises:
+            TypeError: Если передан объект не типа List[Aeroplane].
+        """
+        if not isinstance(aeroplanes, list):
+            raise TypeError("aeroplanes должен быть списком.")
+
+        for aeroplane in aeroplanes:
+            if not isinstance(aeroplane, Aeroplane):
+                raise TypeError("Все элементы списка должны быть типа Aeroplane.")
+            index = next((i for i, p in enumerate(self._storage) if p.icao24 == aeroplane.icao24), None)
+            if index is not None:
+                self._storage[index] = aeroplane
+            else:
+                self._storage.append(aeroplane)
+
+        self._save()  # только один раз после обработки всех
+
     def get_aeroplanes(self, **filters) -> list[Aeroplane]:
         """
         Возвращает список самолётов, удовлетворяющих заданным фильтрам.
