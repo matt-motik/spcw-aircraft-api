@@ -90,7 +90,8 @@ class JsonStorage(BaseStorage):
         Raises:
             ValueError: Если переданы некорректные ключи фильтрации.
         """
-        valid_keys = {'origin_country', 'min_altitude', 'max_altitude', 'min_velocity', 'max_velocity', 'on_ground'}
+        valid_keys = {'origin_country', 'min_altitude', 'max_altitude', 'min_velocity', 'max_velocity', 'on_ground',
+                      'min_latitude', 'max_latitude', 'min_longitude', 'max_longitude'}
         for key in filters:
             if key not in valid_keys:
                 raise ValueError(f"Некорректный фильтр: {key}")
@@ -114,6 +115,18 @@ class JsonStorage(BaseStorage):
         if 'on_ground' in filters:
             on_gr = bool(filters['on_ground'])
             result = [p for p in result if p.on_ground == on_gr]
+        if 'min_latitude' in filters:
+            min_lat = float(filters['min_latitude'])
+            result = [p for p in result if p.latitude is not None and p.latitude >= min_lat]
+        if 'max_latitude' in filters:
+            max_lat = float(filters['max_latitude'])
+            result = [p for p in result if p.latitude is not None and p.latitude <= max_lat]
+        if 'min_longitude' in filters:
+            min_lon = float(filters['min_longitude'])
+            result = [p for p in result if p.longitude is not None and p.longitude >= min_lon]
+        if 'max_longitude' in filters:
+            max_lon = float(filters['max_longitude'])
+            result = [p for p in result if p.longitude is not None and p.longitude <= max_lon]
 
         return result
 
@@ -137,8 +150,6 @@ class JsonStorage(BaseStorage):
             self._save()
         else:
             raise ValueError(f"Самолёт с icao24={aeroplane.icao24!r} не найден в хранилище.")
-
-
 
     def _read_json_file(self) -> Any | None:
         """Функция чтения JSON-файла.
