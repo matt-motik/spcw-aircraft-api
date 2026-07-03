@@ -259,3 +259,28 @@ class Aeroplane:
                 # Можно добавить logger.warning(...)
                 continue
         return aeroplanes
+
+    def to_dict(self) -> dict:
+        return {
+            "icao24": self.icao24,
+            "callsign": self.callsign,
+            "origin_country": self.origin_country,
+            "longitude": self.longitude,
+            "latitude": self.latitude,
+            "altitude": self.altitude,
+            "velocity": self.velocity,
+            "on_ground": self.on_ground,
+        }
+
+    @staticmethod
+    def from_dict(data: dict) -> Aeroplane:
+        return Aeroplane(
+            icao24=data["icao24"],
+            callsign=data.get("callsign", ""),
+            origin_country=data.get("origin_country", ""),
+            longitude=data.get("longitude"),
+            latitude=data.get("latitude"),
+            altitude=float(data.get("altitude", 0.0)),
+            velocity=float(data.get("velocity", 0.0)),
+            on_ground=bool(data.get("on_ground", False)),
+        )
