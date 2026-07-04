@@ -1,5 +1,8 @@
 """Модуль базового класса для работы с хранилищем самолётов."""
-from abc import abstractmethod, ABC
+
+from abc import ABC
+from abc import abstractmethod
+from typing import Any
 
 from .aeroplane import Aeroplane
 
@@ -11,6 +14,7 @@ class BaseStorage(ABC):
     Определяет интерфейс для добавления, получения и удаления записей.
     Конкретные реализации (JSON, CSV, БД) должны переопределить все методы.
     """
+
     @abstractmethod
     def add_aeroplane(self, aeroplane: Aeroplane) -> None:
         """
@@ -26,7 +30,7 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def get_aeroplanes(self, **filters) -> list[Aeroplane]:
+    def get_aeroplanes(self, **filters: dict[str, Any]) -> list[Aeroplane]:
         """
         Возвращает список самолётов, удовлетворяющих заданным фильтрам.
 

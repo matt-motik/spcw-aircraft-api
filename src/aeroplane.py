@@ -1,15 +1,22 @@
 """Модуль класса, моделирующего данные самолёта."""
+
 from functools import total_ordering
-from typing import Optional, Any
+from typing import Any
+from typing import Optional
+
+from .logger_creator import create_logger
+
+logger = create_logger(__name__)
 
 
 @total_ordering
 class Aeroplane:
     """
     Класс, представляющий данные о самолёте.
+
     Инкапсулирует атрибуты, полученные из API OpenSky Network, и предоставляет
         методы для валидации, сравнения и создания объектов из сырых данных.
-        """
+    """
 
     # Ожидаемые индексы в массиве состояния от OpenSky API
     _STATE_ICAO24 = 0
@@ -22,15 +29,15 @@ class Aeroplane:
     _STATE_VELOCITY = 9
 
     def __init__(
-            self,
-            icao24: str,  # Уникальный идентификатор борта
-            callsign: str,  # Позывной рейса
-            origin_country: str,  # Страна регистрации воздушного судна.
-            longitude: float | None,  # Долгота (°)
-            latitude: float | None,  # Широта(°)
-            altitude: float,  # Барометрическая высота в метрах.
-            velocity: float,  # Скорость относительно земли в м/с (>=0).
-            on_ground: bool,  # Флаг нахождения на земле.
+        self,
+        icao24: str,  # Уникальный идентификатор борта
+        callsign: str,  # Позывной рейса
+        origin_country: str,  # Страна регистрации воздушного судна.
+        longitude: float | None,  # Долгота (°)
+        latitude: float | None,  # Широта(°)
+        altitude: float,  # Барометрическая высота в метрах.
+        velocity: float,  # Скорость относительно земли в м/с (>=0).
+        on_ground: bool,  # Флаг нахождения на земле.
     ) -> None:
         """
         Инициализация объекта самолёта с валидацией.
@@ -48,6 +55,7 @@ class Aeroplane:
         Raises:
             ValueError: Если параметры не проходят валидацию.
         """
+        logger.debug("Создаем Самолёт.")
         self.icao24 = icao24
         self.callsign = callsign
         self.origin_country = origin_country
@@ -56,6 +64,7 @@ class Aeroplane:
         self.altitude = altitude
         self.velocity = velocity
         self.on_ground = on_ground
+        logger.debug(f"Самолёт cоздан успешно. {self.__repr__()}.")
 
     @property
     def icao24(self) -> str:
@@ -66,15 +75,15 @@ class Aeroplane:
     def icao24(self, value: str) -> None:
         """Сеттер. Уникальный идентификатор борта (транспондера)."""
         if not isinstance(value, str):
-            raise TypeError("icao24 должен быть строкой.")
-        clean = value.strip()
+            raise TypeError(f"icao24 должен быть строкой. Получен {value}:{type(value).__name__}.")
+        clean = str(value).strip().upper()
         if len(clean) != 6:
-            raise ValueError("icao24 должен содержать ровно 6 символов.")
+            raise ValueError(f"icao24 должен содержать ровно 6 символов. Получено {len(clean)}: '{clean}'")
         try:
             int(clean, 16)  # проверка на hex
         except ValueError:
-            raise ValueError("icao24 должен быть шестнадцатеричной строкой (0-9, a-f, A-F).")
-        self._icao24 = clean.upper()
+            raise ValueError(f"icao24 должен быть шестнадцатеричной строкой (0-9, A-F). '{clean}'") from None
+        self._icao24 = clean
 
     @property
     def callsign(self) -> str:
@@ -85,11 +94,11 @@ class Aeroplane:
     def callsign(self, value: str) -> None:
         """Сеттер. Позывной рейса."""
         if not isinstance(value, str):
-            raise TypeError("callsign должен быть строкой.")
-        clean = value.strip()
+            raise TypeError(f"callsign должен быть строкой. Получен {value}:{type(value).__name__}.")
+        clean = value.strip().upper()
         if len(clean) > 8:
-            raise ValueError("callsign должен содержать не более 8 символов.")
-        self._callsign = clean.upper()
+            raise ValueError(f"callsign должен содержать не более 8 символов. Получено {len(clean)}: '{clean}'")
+        self._callsign = clean
 
     @property
     def origin_country(self) -> str:
@@ -100,7 +109,7 @@ class Aeroplane:
     def origin_country(self, value: str) -> None:
         """Сеттер. Страна регистрации."""
         if not isinstance(value, str):
-            raise TypeError("origin_country должен быть строкой.")
+            raise TypeError(f"origin_country должен быть строкой. Получен {value}:{type(value).__name__}.")
         self._origin_country = value.strip()
 
     @property
@@ -115,9 +124,9 @@ class Aeroplane:
             self._longitude = None
             return
         if not isinstance(value, (float, int)):
-            raise TypeError("longitude должен быть числом.")
+            raise TypeError(f"longitude должен быть числом. Получен {value}:{type(value).__name__}.")
         if not (-180 <= value <= 180):
-            raise ValueError("Значение longitude должно быть от -180 до 180")
+            raise ValueError(f"Значение longitude должно быть от -180 до 180. Получен {value}")
         self._longitude = value
 
     @property
@@ -132,9 +141,9 @@ class Aeroplane:
             self._latitude = None
             return
         if not isinstance(value, (float, int)):
-            raise TypeError("latitude должен быть числом.")
+            raise TypeError(f"latitude должен быть числом. Получен {value}:{type(value).__name__}.")
         if not (-90 <= value <= 90):
-            raise ValueError("Значение latitude должно быть от -90 до 90")
+            raise ValueError(f"Значение latitude должно быть от -90 до 90. Получен {value}")
         self._latitude = value
 
     @property
@@ -146,7 +155,7 @@ class Aeroplane:
     def altitude(self, value: float) -> None:
         """Сеттер. Барометрическая высота, м."""
         if not isinstance(value, (float, int)):
-            raise TypeError("altitude должен быть числом.")
+            raise TypeError(f"altitude должен быть числом. Получен {value}:{type(value).__name__}.")
         self._altitude = value
 
     @property
@@ -158,7 +167,7 @@ class Aeroplane:
     def velocity(self, value: float) -> None:
         """Сеттер. Скорость относительно земли, м/с."""
         if not isinstance(value, (float, int)):
-            raise TypeError("velocity должен быть числом.")
+            raise TypeError(f"velocity должен быть числом. Получен {value}:{type(value).__name__}.")
         if value < 0:
             raise ValueError("velocity должен быть больше 0.")
         self._velocity = value
@@ -172,27 +181,19 @@ class Aeroplane:
     def on_ground(self, value: bool) -> None:
         """Сеттер. Флаг нахождения на земле."""
         if not isinstance(value, bool):
-            raise TypeError("on_ground должен быть булевым значением.")
+            raise TypeError(f"on_ground должен быть булевым значением. Получен {value}:{type(value).__name__}.")
         self._on_ground = value
 
     # ---------- методы сравнения ----------
     def __eq__(self, other: object) -> bool:
-        """
-        Сравнение самолётов по (высота, скорость).
-
-        Сравнивает по кортежу (altitude, velocity). Если other не Aeroplane, вызывает TypeError.
-        """
+        """Сравнение самолётов по (высота, скорость)."""
         if not isinstance(other, Aeroplane):
-            # raise TypeError("other должен быть типа Aeroplane.")
             return NotImplemented
         return (self.altitude, self.velocity) == (other.altitude, other.velocity)
 
     def __lt__(self, other: object) -> bool:
-        """
-        Меньше — значит ниже (или медленнее при равной высоте).
-        """
+        """Меньше — значит ниже (или медленнее при равной высоте)."""
         if not isinstance(other, Aeroplane):
-            # raise TypeError("other должен быть типа Aeroplane.")
             return NotImplemented
         return (self.altitude, self.velocity) < (other.altitude, other.velocity)
 
@@ -202,7 +203,6 @@ class Aeroplane:
         if decimal_degrees is None:
             return "N/A"
 
-        # Определяем направление
         if is_latitude:
             direction = "N" if decimal_degrees >= 0 else "S"
         else:
@@ -216,8 +216,8 @@ class Aeroplane:
 
         return f"{degrees}°{minutes}′{seconds:.0f}″{direction}"
 
-    # ---------- строковое представление ----------
     def __repr__(self) -> str:
+        """Репрезентация."""
         return (
             f"Aeroplane(icao24={self.icao24!r}, callsign={self.callsign!r}, "
             f"origin_country={self.origin_country!r}, longitude={self.longitude}, "
@@ -226,22 +226,22 @@ class Aeroplane:
         )
 
     def __str__(self) -> str:
+        """Строковое представление."""
         status = "на земле" if self.on_ground else "в воздухе"
         lon_str = self._decimal_to_dms(self.longitude, is_latitude=False) if self.longitude is not None else "N/A"
         lat_str = self._decimal_to_dms(self.latitude, is_latitude=True) if self.latitude is not None else "N/A"
 
         return (
-            f"ICAO24 {self.icao24 or 'N/A'} | "
-            f"Рейс {self.callsign or 'N/A'} | "
-            f"Страна: {self.origin_country} | "
-            f"Долгота: {lon_str} | "
-            f"Широта: {lat_str} | "
-            f"Высота: {self.altitude:.0f} м | "
-            f"Скорость: {self.velocity:.0f} м/с | "
+            f"ICAO24 {self.icao24 or 'N/A':<8} | "
+            f"Рейс {self.callsign or 'N/A':<8} | "
+            f"Страна: {self.origin_country:<30} | "
+            f"Координаты : {lat_str:<11} / {lon_str:<11} | "
+            f"Высота: {self.altitude:5.0f} м | "
+            f"Скорость: {self.velocity:4.0f} м/с | "
             f"Статус: {status}"
         )
 
-    # ---------- фабричный метод ----------
+
     @staticmethod
     def cast_to_object_list(data: list[list[Optional[Any]]]) -> list[Aeroplane]:
         """
@@ -290,12 +290,13 @@ class Aeroplane:
                     )
                 )
             except (IndexError, ValueError) as e:
-                # Логирование или пропуск некорректной записи
-                # Можно добавить logger.warning(...)
+                # Логирование и пропуск некорректной записи
+                logger.warning(f"Пропущена некорректная запись самолёта: {state[:9]}... Ошибка: {e}")
                 continue
         return aeroplanes
 
     def to_dict(self) -> dict:
+        """Сериализация в словарь."""
         return {
             "icao24": self.icao24,
             "callsign": self.callsign,
@@ -309,6 +310,7 @@ class Aeroplane:
 
     @staticmethod
     def from_dict(data: dict) -> Aeroplane:
+        """Десериализация из словаря."""
         return Aeroplane(
             icao24=data["icao24"],
             callsign=data.get("callsign", ""),
