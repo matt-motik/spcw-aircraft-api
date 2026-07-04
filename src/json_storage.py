@@ -21,6 +21,8 @@ class JsonStorage(BaseStorage):
 
     def __init__(self, storage_path: str) -> None:
         """Инициализация хранилища."""
+        if not isinstance(storage_path, str):
+            raise TypeError("storage_path должен быть валидным путём")
         self._storage: list[Aeroplane] = []
         datadir = get_data_dir()
         self._storage_path: str = os.path.join(datadir, storage_path)

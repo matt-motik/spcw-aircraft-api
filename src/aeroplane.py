@@ -241,7 +241,6 @@ class Aeroplane:
             f"Статус: {status}"
         )
 
-
     @staticmethod
     def cast_to_object_list(data: list[list[Optional[Any]]]) -> list[Aeroplane]:
         """
@@ -289,9 +288,13 @@ class Aeroplane:
                         on_ground=on_ground,
                     )
                 )
-            except (IndexError, ValueError) as e:
+            except (IndexError, ValueError, AttributeError) as e:
                 # Логирование и пропуск некорректной записи
                 logger.warning(f"Пропущена некорректная запись самолёта: {state[:9]}... Ошибка: {e}")
+                continue
+            except TypeError as e:
+                # Логирование и пропуск некорректной записи
+                logger.warning(f"Пропущена некорректная запись самолёта: Ошибка: {e}")
                 continue
         return aeroplanes
 
