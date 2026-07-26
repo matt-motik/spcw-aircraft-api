@@ -38,6 +38,7 @@ class Aeroplane:
         altitude: float,  # Барометрическая высота в метрах.
         velocity: float,  # Скорость относительно земли в м/с (>=0).
         on_ground: bool,  # Флаг нахождения на земле.
+        country_id: int | None = None,  # Страна над которой летит.
     ) -> None:
         """
         Инициализация объекта самолёта с валидацией.
@@ -51,6 +52,7 @@ class Aeroplane:
             altitude: Барометрическая высота в метрах.
             velocity: Скорость относительно земли в м/с (>=0).
             on_ground: Флаг нахождения на земле.
+            country_id: Страна над которой летит.
 
         Raises:
             ValueError: Если параметры не проходят валидацию.
@@ -64,6 +66,7 @@ class Aeroplane:
         self.altitude = altitude
         self.velocity = velocity
         self.on_ground = on_ground
+        self.country_id = country_id
         logger.debug(f"Самолёт cоздан успешно. {self.__repr__()}.")
 
     @property
@@ -184,6 +187,21 @@ class Aeroplane:
             raise TypeError(f"on_ground должен быть булевым значением. Получен {value}:{type(value).__name__}.")
         self._on_ground = value
 
+    @property
+    def country_id(self) -> int | None:
+        """Страна над которой летит."""
+        return self._country_id
+
+    @country_id.setter
+    def country_id(self, value: int | None) -> None:
+        """Сеттер. Страна над которой летит."""
+        if value is None:
+            self._country_id = None
+            return
+        if not isinstance(value, int):
+            raise TypeError(f"country_id должен быть int. Получен {value}:{type(value).__name__}.")
+        self._country_id = value
+
     # ---------- методы сравнения ----------
     def __eq__(self, other: object) -> bool:
         """Сравнение самолётов по (высота, скорость)."""
@@ -242,7 +260,7 @@ class Aeroplane:
         )
 
     @staticmethod
-    def cast_to_object_list(data: list[list[Optional[Any]]]) -> list[Aeroplane]:
+    def cast_to_object_list(data: list[list[Optional[Any]]], country_id: int | None = None) -> list[Aeroplane]:
         """
         Преобразует сырой список состояний от OpenSky API в список объектов Aeroplane.
 
@@ -255,6 +273,7 @@ class Aeroplane:
 
         Args:
             data: Список списков, полученный из API.
+            country_id: id страны над которой летит.
 
         Returns:
             Список экземпляров Aeroplane.
@@ -286,6 +305,7 @@ class Aeroplane:
                         altitude=alt,
                         velocity=vel,
                         on_ground=on_ground,
+                        country_id=country_id,
                     )
                 )
             except (IndexError, ValueError, AttributeError) as e:
@@ -309,6 +329,7 @@ class Aeroplane:
             "altitude": self.altitude,
             "velocity": self.velocity,
             "on_ground": self.on_ground,
+            "country_id": self.country_id,
         }
 
     @staticmethod
@@ -323,4 +344,5 @@ class Aeroplane:
             altitude=float(data.get("altitude", 0.0)),
             velocity=float(data.get("velocity", 0.0)),
             on_ground=bool(data.get("on_ground", False)),
+            country_id=data.get("country_id"),
         )
