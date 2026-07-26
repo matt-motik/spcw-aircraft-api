@@ -3,6 +3,9 @@
 from src.aeroplane import Aeroplane
 from src.aeroplanes_api import AeroplanesAPI
 from src.base_api import BaseAPI
+from src.base_storage import BaseStorage
+from src.db_initializer import initialize_database
+from src.db_manager import DBManager
 from src.json_storage import JsonStorage
 
 
@@ -103,22 +106,66 @@ def print_aeroplanes(aeroplanes: list[Aeroplane]) -> None:
         print(*aeroplanes, sep="\n")
 
 
-def user_interaction(api: BaseAPI, storage: JsonStorage) -> None:
+def load_initial_countries(api: BaseAPI, storage: BaseStorage) -> None:
+    """Загружает начальные данные по 4+ странам."""
+    countries = ["Russia", "Germany", "Turkey", "Poland", "Italy", "Spain", "China", "Japan", "Brazil", "Finnland"]
+    storage.initialize()
+
+    print(f"\nЗагрузка данных по {len(countries)} странам...")
+    success_count = 0
+
+    for country_name in countries:
+        try:
+            bbox = api.get_country_bbox(country_name)
+            country_id = storage.add_country(country_name, bbox)
+            raw_planes = api.get_aeroplanes(country_name)
+            planes = Aeroplane.cast_to_object_list(raw_planes, country_id=country_id)
+            storage.add_multiple_aeroplanes(planes)
+            print(f"  ✅ {country_name}: {len(planes)} самолётов")
+            success_count += 1
+        except RuntimeError as e:
+            print(f"  ❌ {country_name}: {e}")
+
+    print(f"\nЗагружено данных по {success_count} из {len(countries)} стран.")
+
+
+def user_interaction(api: BaseAPI, storage: BaseStorage) -> None:
     """Функция для взаимодействия с пользователем."""
     country = input("Введите название страны: ")
+    # 1. Сохраняем страну (если хранилище поддерживает)
+    bbox = None
+    country_id = None
+
     try:
-        aeroplanes = api.get_aeroplanes(country)
-        aeroplanes = Aeroplane.cast_to_object_list(aeroplanes)
+        bbox = api.get_country_bbox(country)
+        country_id = storage.add_country(country, bbox)
+    except RuntimeError:
+        # API недоступен — проверяем хранилище
+        country_data = storage.get_country(country)
+        if country_data:
+            bbox = {
+                "lamin": country_data["lat_min"],
+                "lamax": country_data["lat_max"],
+                "lomin": country_data["lon_min"],
+                "lomax": country_data["lon_max"],
+            }
+            country_id = country_data["id"]
+            print(f"Использую данные о стране '{country}' из хранилища.")
+        else:
+            print("Не удалось определить границы страны, координатный фильтр не будет применён.")
+
+    # 2. Запрашиваем самолёты
+    try:
+        raw_planes = api.get_aeroplanes(country)
+        aeroplanes = Aeroplane.cast_to_object_list(raw_planes, country_id=country_id)
         storage.add_multiple_aeroplanes(aeroplanes)
         print(f"Получено {len(aeroplanes)} самолётов с OpenSky.")
     except RuntimeError as e:
         print(f"Не удалось получить данные: {e}. Использую данные из хранилища.")
-    try:
-        bbox = api.get_country_bbox(country)
-    except RuntimeError:
-        bbox = None
-        print("Не удалось определить границы страны, координатный фильтр не будет применён.")
 
+    show_statistics(storage)
+
+    # 3. Фильтрация пользователем
     top_n = input_int("Введите количество самолетов для вывода в топ N: ")
     if top_n is None:
         print("Ввод отменён.")
@@ -143,7 +190,8 @@ def user_interaction(api: BaseAPI, storage: JsonStorage) -> None:
         filters["min_velocity"] = min_vel
     if max_vel := input_float("Максимальная скорость: "):
         filters["max_velocity"] = max_vel
-    if on_ground := input_bool("На земле (да/нет): "):
+    on_ground = input_bool("На земле (да/нет): ")
+    if on_ground is not None:
         filters["on_ground"] = on_ground
 
     filtered = storage.get_aeroplanes(**filters)
@@ -151,19 +199,94 @@ def user_interaction(api: BaseAPI, storage: JsonStorage) -> None:
         print(f"Найдено {len(filtered)} соответствующих запросу самолётов.")
     else:
         print("Самолёты, соответствующие запросу, не найдены.")
-        return
 
     sorted_aeroplanes = sort_aeroplanes(filtered)
     top_aeroplanes = get_top_aeroplanes(sorted_aeroplanes, top_n)
     print_aeroplanes(top_aeroplanes)
 
+    print("\n" + "=" * 60)
+    print("ПОИСК ПО ПОЗЫВНОМУ (по всем самолетам в хранилище)")
+    print("=" * 60)
+
+    callsign_keyword = input("Введите ключевое слово для поиска в позывном (Enter чтобы пропустить): ").strip()
+    if callsign_keyword:
+        keyword_results = storage.get_aeroplanes_with_keyword(callsign_keyword)
+        if keyword_results:
+            print(f"\n✅ Найдено {len(keyword_results)} самолётов с '{callsign_keyword}' в позывном:")
+            print_aeroplanes(keyword_results[:20])
+            if len(keyword_results) > 20:
+                print(f"  ... и еще {len(keyword_results) - 20} самолетов")
+        else:
+            print(f"❌ Самолёты с '{callsign_keyword}' в позывном не найдены.")
+    else:
+        print("Поиск по позывному пропущен.")
+
+
+def show_statistics(storage: BaseStorage) -> None:
+    """Показывает статистику по самолетам."""
+    if not isinstance(storage, DBManager):
+        print("Статистика доступна только при работе с БД")
+        return
+
+    print("\n" + "=" * 60)
+    print("📊 СТАТИСТИКА ПО САМОЛЕТАМ")
+    print("=" * 60)
+
+    # 1. Страны и количество самолетов
+    countries_stats = storage.get_countries_and_aeroplanes_count()
+    print("\n СТРАНЫ И КОЛИЧЕСТВО САМОЛЕТОВ:")
+    for item in countries_stats:
+        print(f"  {item['name']}: {item['aeroplanes_count']} самолетов")
+
+    # 2. Все самолеты
+    all_planes = storage.get_all_aeroplanes()
+    print(f"\n ВСЕГО САМОЛЕТОВ: {len(all_planes)}")
+
+    # 3. Средняя скорость
+    avg_speed = storage.get_avg_speed()
+    print(f"\n  СРЕДНЯЯ СКОРОСТЬ: {avg_speed:.2f} м/с ({avg_speed * 3.6:.2f} км/ч)")
+
+    # 4. Самые быстрые самолеты
+    fast_planes = storage.get_aeroplanes_with_higher_speed(5)
+    print("\n ТОП-5 САМЫХ БЫСТРЫХ САМОЛЕТОВ:")
+    if fast_planes:
+        for i, plane in enumerate(fast_planes, 1):
+            print(f"  {i}. {plane}")  # ✅ Используем __str__!
+    else:
+        print("  Нет данных")
+
+
+def choose_storage() -> BaseStorage:
+    """Выбор хранилища пользователем."""
+    print("Выберите хранилище:")
+    print("1. PostgreSQL (БД)")
+    print("2. JSON-файл")
+
+    choice = input("Ваш выбор (1/2): ").strip()
+
+    if choice == "2":
+        return JsonStorage("aeroplanes.json")
+    return DBManager()
+
 
 def main() -> None:
     """Основная функция запуска."""
-    json_aeroplanes_storage = JsonStorage("aeroplanes.json")
+    storage = choose_storage()
+    storage.initialize()
     opensky_api = AeroplanesAPI()
-    user_interaction(opensky_api, json_aeroplanes_storage)
+    # Загрузка начальных данных
+    load_initial_countries(opensky_api, storage)
+
+    # Интерактивный режим
+    while True:
+        user_interaction(opensky_api, storage)
+        if input_bool("\nПродолжить работу? (y/n): ") is False:
+            print("До свидания!")
+            break
+
+    storage.close()
 
 
 if __name__ == "__main__":
+    initialize_database()
     main()
