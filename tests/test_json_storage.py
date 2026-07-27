@@ -195,8 +195,10 @@ def test_save_os_error(temp_storage, plane_1, monkeypatch):
 def test_add_country(temp_storage):
     assert temp_storage.add_country("Canada", {}) is None
 
+
 def test_get_country(temp_storage):
     assert temp_storage.get_country("Canada") is None
+
 
 def test_close(temp_storage):
     assert temp_storage.close() is None

@@ -150,9 +150,11 @@ def test_eq_type_error(plane_1):
 def test_lt_type_error(plane_1):
     assert (plane_1.__lt__(1)) is NotImplemented
 
+
 def test_country_id_type_error(plane_1):
     with pytest.raises(TypeError):
         plane_1.country_id = "45"
+
 
 def test__decimal_to_dms_none():
     assert Aeroplane._decimal_to_dms(None) == "N/A"

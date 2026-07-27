@@ -1,7 +1,10 @@
 """Тесты для модуля db_manager."""
-from unittest.mock import MagicMock, patch
+
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
+
 from src.aeroplane import Aeroplane
 from src.db_manager import DBManager
 
@@ -16,10 +19,10 @@ class TestDBManager:
             "database": "test_db",
             "user": "test_user",
             "password": "test_pass",
-            "port": "5432"
+            "port": "5432",
         }
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_connection_lazy_creation(self, mock_connect):
         """Тест ленивого создания соединения."""
         mock_connect.return_value = MagicMock()
@@ -32,7 +35,7 @@ class TestDBManager:
         _ = db.connection
         mock_connect.assert_called_once()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_create_tables(self, mock_connect):
         """Тест создания таблиц."""
         mock_conn = MagicMock()
@@ -44,12 +47,11 @@ class TestDBManager:
         db.create_tables()
 
         # Проверяем вызовы CREATE TABLE
-        create_calls = [call for call in mock_cursor.execute.call_args_list
-                        if "CREATE TABLE" in str(call)]
+        create_calls = [call for call in mock_cursor.execute.call_args_list if "CREATE TABLE" in str(call)]
         assert len(create_calls) >= 2  # countries и aeroplanes
         mock_conn.commit.assert_called()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_insert_country(self, mock_connect):
         """Тест вставки страны."""
         mock_conn = MagicMock()
@@ -64,7 +66,7 @@ class TestDBManager:
         assert country_id == 1
         mock_conn.commit.assert_called()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_add_country(self, mock_connect):
         """Тест добавления страны."""
         mock_conn = MagicMock()
@@ -79,7 +81,7 @@ class TestDBManager:
 
         assert country_id == 1
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_insert_aeroplane(self, mock_connect):
         """Тест вставки самолета."""
         mock_conn = MagicMock()
@@ -97,7 +99,7 @@ class TestDBManager:
             altitude=10000.0,
             velocity=200.0,
             on_ground=False,
-            country_id=1
+            country_id=1,
         )
 
         # Проверяем, что INSERT выполнен
@@ -105,7 +107,7 @@ class TestDBManager:
         sql = mock_cursor.execute.call_args[0][0]
         assert "INSERT INTO aeroplanes" in sql
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_add_aeroplane(self, mock_connect):
         """Тест добавления самолета."""
         mock_conn = MagicMock()
@@ -123,22 +125,30 @@ class TestDBManager:
             altitude=10000.0,
             velocity=200.0,
             on_ground=False,
-            country_id=1
+            country_id=1,
         )
         db.add_aeroplane(plane)
 
         mock_cursor.execute.assert_called_once()
         mock_conn.commit.assert_called()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_all_aeroplanes(self, mock_connect):
         """Тест получения всех самолетов."""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchall.return_value = [
-            {"icao24": "ABC123", "callsign": "TEST123", "origin_country": "Russia",
-             "longitude": 30.0, "latitude": 60.0, "altitude": 10000.0,
-             "velocity": 200.0, "on_ground": False, "country_id": 1}
+            {
+                "icao24": "ABC123",
+                "callsign": "TEST123",
+                "origin_country": "Russia",
+                "longitude": 30.0,
+                "latitude": 60.0,
+                "altitude": 10000.0,
+                "velocity": 200.0,
+                "on_ground": False,
+                "country_id": 1,
+            }
         ]
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
         mock_connect.return_value = mock_conn
@@ -149,7 +159,7 @@ class TestDBManager:
         assert len(planes) == 1
         assert planes[0].icao24 == "ABC123"
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_avg_speed(self, mock_connect):
         """Тест получения средней скорости."""
         mock_conn = MagicMock()
@@ -163,15 +173,23 @@ class TestDBManager:
 
         assert avg_speed == 250.5
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_higher_speed(self, mock_connect):
         """Тест получения самолетов со скоростью выше средней."""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchall.return_value = [
-            {"icao24": "ABC123", "callsign": "TEST123", "origin_country": "Russia",
-             "longitude": 30.0, "latitude": 60.0, "altitude": 10000.0,
-             "velocity": 300.0, "on_ground": False, "country_id": 1}
+            {
+                "icao24": "ABC123",
+                "callsign": "TEST123",
+                "origin_country": "Russia",
+                "longitude": 30.0,
+                "latitude": 60.0,
+                "altitude": 10000.0,
+                "velocity": 300.0,
+                "on_ground": False,
+                "country_id": 1,
+            }
         ]
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
         mock_connect.return_value = mock_conn
@@ -182,15 +200,23 @@ class TestDBManager:
         assert len(planes) == 1
         assert planes[0].velocity == 300.0
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_keyword(self, mock_connect):
         """Тест поиска самолетов по позывному."""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchall.return_value = [
-            {"icao24": "ABC123", "callsign": "AAL123", "origin_country": "USA",
-             "longitude": 30.0, "latitude": 60.0, "altitude": 10000.0,
-             "velocity": 200.0, "on_ground": False, "country_id": 1}
+            {
+                "icao24": "ABC123",
+                "callsign": "AAL123",
+                "origin_country": "USA",
+                "longitude": 30.0,
+                "latitude": 60.0,
+                "altitude": 10000.0,
+                "velocity": 200.0,
+                "on_ground": False,
+                "country_id": 1,
+            }
         ]
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
         mock_connect.return_value = mock_conn
@@ -201,13 +227,12 @@ class TestDBManager:
         assert len(planes) == 1
         assert "AAL" in planes[0].callsign
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_country(self, mock_connect):
         """Тест получения страны."""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = {"id": 1, "lat_min": -90, "lat_max": 90,
-                                             "lon_min": -180, "lon_max": 180}
+        mock_cursor.fetchone.return_value = {"id": 1, "lat_min": -90, "lat_max": 90, "lon_min": -180, "lon_max": 180}
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
         mock_connect.return_value = mock_conn
 
@@ -217,7 +242,7 @@ class TestDBManager:
         assert country["id"] == 1
         assert country["lat_min"] == -90
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_delete_aeroplane(self, mock_connect):
         """Тест удаления самолета."""
         mock_conn = MagicMock()
@@ -235,7 +260,7 @@ class TestDBManager:
             altitude=10000.0,
             velocity=200.0,
             on_ground=False,
-            country_id=1
+            country_id=1,
         )
         db.delete_aeroplane(plane)
 
@@ -254,10 +279,10 @@ class TestDBManagerAdditional:
             "database": "test_db",
             "user": "test_user",
             "password": "test_pass",
-            "port": "5432"
+            "port": "5432",
         }
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_connection_property_reuses_existing(self, mock_connect):
         """Тест повторного использования соединения."""
         mock_conn = MagicMock()
@@ -272,7 +297,7 @@ class TestDBManagerAdditional:
         mock_connect.assert_called_once()
         assert conn1 is conn2
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_connection_recreates_if_closed(self, mock_connect):
         """Тест пересоздания закрытого соединения."""
         mock_conn = MagicMock()
@@ -294,7 +319,7 @@ class TestDBManagerAdditional:
         assert mock_connect.call_count == 2
         assert conn2 is not conn1
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_insert_aeroplane_without_country(self, mock_connect):
         """Тест вставки самолета без country_id."""
         mock_conn = MagicMock()
@@ -312,14 +337,14 @@ class TestDBManagerAdditional:
             altitude=10000.0,
             velocity=200.0,
             on_ground=False,
-            country_id=None  # Без страны
+            country_id=None,  # Без страны
         )
 
         mock_cursor.execute.assert_called_once()
         sql = mock_cursor.execute.call_args[0][0]
         assert "country_id" in sql
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_invalid_filter(self, mock_connect):
         """Тест ошибки при некорректном фильтре."""
         mock_connect.return_value = MagicMock()
@@ -329,7 +354,7 @@ class TestDBManagerAdditional:
         with pytest.raises(ValueError, match="Некорректный фильтр: invalid_filter"):
             db.get_aeroplanes(invalid_filter="test")
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_all_filters(self, mock_connect):
         """Тест применения всех фильтров одновременно."""
         mock_conn = MagicMock()
@@ -351,7 +376,7 @@ class TestDBManagerAdditional:
             min_longitude=20,
             max_longitude=80,
             country_id=1,
-            callsign="AAL"
+            callsign="AAL",
         )
 
         # Проверяем, что запрос был выполнен с параметрами
@@ -361,7 +386,7 @@ class TestDBManagerAdditional:
         assert "origin_country" in sql.upper() or "UPPER(origin_country)" in sql
         assert "altitude" in sql
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_add_multiple_aeroplanes_with_invalid_type(self, mock_connect):
         """Тест ошибки при добавлении не списка."""
         mock_connect.return_value = MagicMock()
@@ -371,7 +396,7 @@ class TestDBManagerAdditional:
         with pytest.raises(TypeError, match="aeroplanes должен быть списком"):
             db.add_multiple_aeroplanes("not a list")  # type: ignore
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_countries_and_aeroplanes_count_empty(self, mock_connect):
         """Тест получения статистики когда нет данных."""
         mock_conn = MagicMock()
@@ -386,7 +411,7 @@ class TestDBManagerAdditional:
         assert result == []
         mock_cursor.execute.assert_called_once()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_all_aeroplanes_empty(self, mock_connect):
         """Тест получения пустого списка самолетов."""
         mock_conn = MagicMock()
@@ -401,7 +426,7 @@ class TestDBManagerAdditional:
         assert planes == []
         mock_cursor.execute.assert_called_once()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_avg_speed_no_data(self, mock_connect):
         """Тест получения средней скорости когда нет данных."""
         mock_conn = MagicMock()
@@ -415,7 +440,7 @@ class TestDBManagerAdditional:
 
         assert avg_speed == 0.0
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_higher_speed_limit_zero(self, mock_connect):
         """Тест получения самолетов с лимитом <= 0."""
         mock_connect.return_value = MagicMock()
@@ -428,7 +453,7 @@ class TestDBManagerAdditional:
         # Проверяем, что SQL не выполнялся
         mock_connect.return_value.cursor.assert_not_called()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_higher_speed_no_data(self, mock_connect):
         """Тест получения самолетов со скоростью выше средней когда нет данных."""
         mock_conn = MagicMock()
@@ -443,7 +468,7 @@ class TestDBManagerAdditional:
         assert planes == []
         mock_cursor.execute.assert_called_once()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_country_not_found(self, mock_connect):
         """Тест получения несуществующей страны."""
         mock_conn = MagicMock()
@@ -457,7 +482,7 @@ class TestDBManagerAdditional:
 
         assert country is None
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_close_connection(self, mock_connect):
         """Тест закрытия соединения."""
         mock_conn = MagicMock()
@@ -473,7 +498,7 @@ class TestDBManagerAdditional:
         mock_conn.close.assert_called_once()
         assert db._connection is None
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_close_already_closed(self, mock_connect):
         """Тест закрытия уже закрытого соединения."""
         mock_conn = MagicMock()
@@ -490,15 +515,23 @@ class TestDBManagerAdditional:
         mock_conn.close.assert_not_called()
         assert db._connection is None
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_callsign_filter(self, mock_connect):
         """Тест фильтрации по позывному."""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchall.return_value = [
-            {"icao24": "ABC123", "callsign": "AAL123", "origin_country": "USA",
-             "longitude": 30.0, "latitude": 60.0, "altitude": 10000.0,
-             "velocity": 200.0, "on_ground": False, "country_id": 1}
+            {
+                "icao24": "ABC123",
+                "callsign": "AAL123",
+                "origin_country": "USA",
+                "longitude": 30.0,
+                "latitude": 60.0,
+                "altitude": 10000.0,
+                "velocity": 200.0,
+                "on_ground": False,
+                "country_id": 1,
+            }
         ]
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
         mock_connect.return_value = mock_conn
@@ -515,7 +548,7 @@ class TestDBManagerAdditional:
         params = mock_cursor.execute.call_args[0][1]
         assert "%AAL%" in params
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_insert_country_existing(self, mock_connect):
         """Тест вставки уже существующей страны."""
         mock_conn = MagicMock()
@@ -537,7 +570,7 @@ class TestDBManagerAdditional:
         assert "SELECT" in sql_second.upper()
         mock_conn.commit.assert_called()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_add_multiple_aeroplanes_valid(self, mock_connect):
         """Тест успешного добавления нескольких самолетов."""
         mock_conn = MagicMock()
@@ -557,7 +590,7 @@ class TestDBManagerAdditional:
                 altitude=10000.0,
                 velocity=200.0,
                 on_ground=False,
-                country_id=1
+                country_id=1,
             ),
             Aeroplane(
                 icao24="DEF456",
@@ -568,7 +601,7 @@ class TestDBManagerAdditional:
                 altitude=8000.0,
                 velocity=180.0,
                 on_ground=False,
-                country_id=1
+                country_id=1,
             ),
         ]
 
@@ -577,7 +610,7 @@ class TestDBManagerAdditional:
         assert mock_cursor.execute.call_count == 2
         mock_conn.commit.assert_called_once()
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_add_multiple_aeroplanes_with_mixed_types(self, mock_connect):
         """Тест ошибки при смешанных типах в списке."""
         mock_connect.return_value = MagicMock()
@@ -593,13 +626,13 @@ class TestDBManagerAdditional:
             altitude=10000.0,
             velocity=200.0,
             on_ground=False,
-            country_id=1
+            country_id=1,
         )
 
         with pytest.raises(TypeError, match="Все элементы списка должны быть типа Aeroplane"):
             db.add_multiple_aeroplanes([plane, "not a plane"])  # type: ignore
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_connection_creates_connection(self, mock_connect):
         """Тест создания соединения."""
         mock_conn = MagicMock()
@@ -616,7 +649,7 @@ class TestDBManagerAdditional:
         mock_connect.assert_called_once()
         assert db._connection is mock_conn
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_initialize_calls_create_tables(self, mock_connect):
         """Тест что initialize вызывает create_tables."""
         mock_conn = MagicMock()
@@ -628,11 +661,10 @@ class TestDBManagerAdditional:
         db.initialize()
 
         # Проверяем, что CREATE TABLE вызывался (через create_tables)
-        create_calls = [call for call in mock_cursor.execute.call_args_list
-                        if "CREATE TABLE" in str(call)]
+        create_calls = [call for call in mock_cursor.execute.call_args_list if "CREATE TABLE" in str(call)]
         assert len(create_calls) >= 2
 
-    @patch('src.db_manager.psycopg2.connect')
+    @patch("src.db_manager.psycopg2.connect")
     def test_get_aeroplanes_with_keyword_empty(self, mock_connect):
         """Тест поиска с пустым keyword."""
         mock_connect.return_value = MagicMock()

@@ -1,10 +1,12 @@
 """Тесты для модуля config_reader."""
+
 import os
 import tempfile
 
 import pytest
 
-from src.config_reader import ConfigError, get_db_config
+from src.config_reader import ConfigError
+from src.config_reader import get_db_config
 
 
 class TestConfigReader:
@@ -12,7 +14,7 @@ class TestConfigReader:
 
     def test_get_db_config_success(self):
         """Тест успешного чтения конфига."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ini', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ini", delete=False) as f:
             f.write("""
 [postgresql]
 host=localhost
@@ -40,7 +42,7 @@ port=5432
 
     def test_get_db_config_section_not_found(self):
         """Тест ошибки при отсутствии секции."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ini', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ini", delete=False) as f:
             f.write("[other_section]\nkey=value\n")
             f.flush()
 
@@ -51,7 +53,7 @@ port=5432
 
     def test_get_db_config_custom_section(self):
         """Тест чтения кастомной секции."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ini', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ini", delete=False) as f:
             f.write("""
 [custom]
 host=192.168.1.1

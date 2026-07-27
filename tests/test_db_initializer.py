@@ -1,6 +1,7 @@
 """Тесты для модуля db_initializer."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import psycopg2
 import pytest
@@ -11,14 +12,14 @@ from src.db_initializer import initialize_database
 class TestDBInitializer:
     """Тесты для инициализации базы данных."""
 
-    @patch('src.db_initializer.get_db_config')
-    @patch('src.db_initializer.psycopg2.connect')
+    @patch("src.db_initializer.get_db_config")
+    @patch("src.db_initializer.psycopg2.connect")
     def test_initialize_database_creates_db_and_user(self, mock_connect, mock_get_config):
         """Тест создания БД и пользователя."""
         # Настройка моков
         mock_get_config.side_effect = [
             {"host": "localhost", "port": "5432", "user": "postgres", "password": "admin"},
-            {"database": "test_db", "user": "test_user", "password": "test_pass"}
+            {"database": "test_db", "user": "test_user", "password": "test_pass"},
         ]
 
         mock_conn = MagicMock()
@@ -46,13 +47,13 @@ class TestDBInitializer:
         # Проверяем, что было второе соединение для выдачи прав
         assert mock_connect.call_count == 2
 
-    @patch('src.db_initializer.get_db_config')
-    @patch('src.db_initializer.psycopg2.connect')
+    @patch("src.db_initializer.get_db_config")
+    @patch("src.db_initializer.psycopg2.connect")
     def test_initialize_database_skips_existing(self, mock_connect, mock_get_config):
         """Тест пропуска существующих БД и пользователя."""
         mock_get_config.side_effect = [
             {"host": "localhost", "port": "5432", "user": "postgres", "password": "admin"},
-            {"database": "test_db", "user": "test_user", "password": "test_pass"}
+            {"database": "test_db", "user": "test_user", "password": "test_pass"},
         ]
 
         mock_conn = MagicMock()
@@ -74,27 +75,27 @@ class TestDBInitializer:
         assert len(create_db_calls) == 0
         assert len(create_user_calls) == 0
 
-    @patch('src.db_initializer.get_db_config')
+    @patch("src.db_initializer.get_db_config")
     def test_initialize_database_connection_error(self, mock_get_config):
         """Тест ошибки подключения к БД."""
         mock_get_config.side_effect = [
             {"host": "localhost", "port": "5432", "user": "postgres", "password": "wrong"},
-            {"database": "test_db", "user": "test_user", "password": "test_pass"}
+            {"database": "test_db", "user": "test_user", "password": "test_pass"},
         ]
 
-        with patch('src.db_initializer.psycopg2.connect') as mock_connect:
+        with patch("src.db_initializer.psycopg2.connect") as mock_connect:
             mock_connect.side_effect = psycopg2.OperationalError("Connection failed")
 
             with pytest.raises(psycopg2.OperationalError):
                 initialize_database("admin.ini", "database.ini")
 
-    @patch('src.db_initializer.get_db_config')
-    @patch('src.db_initializer.psycopg2.connect')
+    @patch("src.db_initializer.get_db_config")
+    @patch("src.db_initializer.psycopg2.connect")
     def test_initialize_database_grants_privileges(self, mock_connect, mock_get_config):
         """Тест выдачи прав на схему public."""
         mock_get_config.side_effect = [
             {"host": "localhost", "port": "5432", "user": "postgres", "password": "admin"},
-            {"database": "test_db", "user": "test_user", "password": "test_pass"}
+            {"database": "test_db", "user": "test_user", "password": "test_pass"},
         ]
 
         # Создаем два разных connection объекта

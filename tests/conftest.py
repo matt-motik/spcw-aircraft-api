@@ -18,7 +18,7 @@ def plane_1():
         altitude=10000.0,
         velocity=250.0,
         on_ground=False,
-        country_id=1
+        country_id=1,
     )
 
 
