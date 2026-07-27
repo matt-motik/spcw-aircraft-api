@@ -1,6 +1,6 @@
 # Модуль: `aeroplane.py`
 
-*Сгенерировано: 2026-07-05 02:04:14*
+*Сгенерировано: 2026-07-27 23:14:50*
 
 ---
 
@@ -279,6 +279,38 @@
 
 ---
 
+<div id="Aeroplane.country_id"></div>
+
+## Aeroplane.country_id
+
+**Тип:** method
+
+**Кратко:** Страна над которой летит.
+
+### Полная документация
+
+```python
+Страна над которой летит.
+```
+
+---
+
+<div id="Aeroplane.country_id"></div>
+
+## Aeroplane.country_id
+
+**Тип:** method
+
+**Кратко:** Сеттер. Страна над которой летит.
+
+### Полная документация
+
+```python
+Сеттер. Страна над которой летит.
+```
+
+---
+
 <div id="Aeroplane.cast_to_object_list"></div>
 
 ## Aeroplane.cast_to_object_list
@@ -301,6 +333,7 @@
 
 Args:
     data: Список списков, полученный из API.
+    country_id: id страны над которой летит.
 
 Returns:
     Список экземпляров Aeroplane.
@@ -596,6 +629,38 @@ Returns:
 
 ---
 
+<div id="country_id"></div>
+
+## country_id
+
+**Тип:** function
+
+**Кратко:** Страна над которой летит.
+
+### Полная документация
+
+```python
+Страна над которой летит.
+```
+
+---
+
+<div id="country_id"></div>
+
+## country_id
+
+**Тип:** function
+
+**Кратко:** Сеттер. Страна над которой летит.
+
+### Полная документация
+
+```python
+Сеттер. Страна над которой летит.
+```
+
+---
+
 <div id="cast_to_object_list"></div>
 
 ## cast_to_object_list
@@ -618,6 +683,7 @@ Returns:
 
 Args:
     data: Список списков, полученный из API.
+    country_id: id страны над которой летит.
 
 Returns:
     Список экземпляров Aeroplane.
