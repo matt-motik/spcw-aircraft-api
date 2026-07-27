@@ -235,7 +235,7 @@ class JsonStorage(BaseStorage):
         Returns:
             id страны или None, если хранилище не поддерживает страны.
         """
-        return None
+        pass
 
     def get_country(self, country_name: str) -> dict | None:
         """
@@ -251,7 +251,7 @@ class JsonStorage(BaseStorage):
             }
             или None, если не найдена или не поддерживается.
         """
-        return None
+        pass
 
     def close(self) -> None:
         """Закрывает хранилище. Для JSON — ничего не делает."""

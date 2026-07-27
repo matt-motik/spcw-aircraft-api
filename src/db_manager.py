@@ -174,7 +174,13 @@ class DBManager(BaseStorage):
         Raises:
             TypeError: Если передан объект не типа List[Aeroplane].
         """
+        if not isinstance(aeroplanes, list):
+            raise TypeError("aeroplanes должен быть списком.")
+
         for aeroplane in aeroplanes:
+            if not isinstance(aeroplane, Aeroplane):
+                raise TypeError("Все элементы списка должны быть типа Aeroplane.")
+
             self.insert_aeroplane(
                 icao24=aeroplane.icao24,
                 callsign=aeroplane.callsign,

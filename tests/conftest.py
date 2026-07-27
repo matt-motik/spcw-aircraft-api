@@ -18,6 +18,7 @@ def plane_1():
         altitude=10000.0,
         velocity=250.0,
         on_ground=False,
+        country_id=1
     )
 
 
@@ -32,6 +33,7 @@ def plane_1_dict():
         "altitude": 10000.0,
         "velocity": 250.0,
         "on_ground": False,
+        "country_id": 1,
     }
 
 
