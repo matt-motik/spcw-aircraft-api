@@ -1,43 +1,40 @@
 # SkyPro Модуль ООП Трекер Самолётов
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+
+[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791.svg)](https://www.postgresql.org/)
 [![Tests](https://img.shields.io/badge/Tests-pytest-green.svg)](https://pytest.org/)
 [![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg)]()
+
 Курсовой проект для получения данных о самолётах, находящихся в воздухе, через открытые API [OpenSky Network](https://opensky-network.org/) и [Nominatim](https://nominatim.openstreetmap.org/), с сохранением в PostgreSQL.
 
-### 🚀 Возможности программы
- Получение bounding box страны через **Nominatim API**
+## 🚀 Возможности программы
+
+- Получение bounding box страны через **Nominatim API**
 - Получение списка самолётов в воздушном пространстве через **OpenSky Network API**
 - Сохранение данных в JSON-файл с возможностью добавления, обновления и удаления записей
-- Сохранять данные в PostgreSQL с поддержкой upsert (обновление существующих записей)
-- Фильтрация самолётов по:
-  - стране регистрации
-  - позывному
-  - диапазону высот
-  - диапазону скоростей
-  - нахождению на земле / в воздухе
-  - географическим координатам (bounding box)
-- Выполнять аналитические запросы: средняя скорость, самые быстрые самолёты
-- Сортировка по высоте (и скорости при равной высоте)
-- Вывод топ-N самолётов
+- Сохранение данных в **PostgreSQL** с поддержкой upsert (обновление существующих записей)
+- Фильтрация самолётов по: стране регистрации, позывному, диапазону высот, диапазону скоростей, нахождению на земле / в воздухе, географическим координатам (bounding box)
+- Аналитические запросы: средняя скорость, самые быстрые самолёты
+- Сортировка по высоте (и скорости при равной высоте), вывод топ-N
 - Работа в офлайн-режиме (использование кэшированных данных при недоступности API)
 
+## 📋 Содержание
 
-## Содержание
 - [Технологии](#технологии)
 - [Установка](#установка)
+- [Конфигурация](#конфигурация)
+- [Использование](#использование)
+- [Структура таблиц БД](#структура-таблиц-бд)
+- [Методы DBManager](#методы-dbmanager)
 - [Разработка](#разработка)
 - [Тестирование](#тестирование)
-- [Deploy и CI/CD](#deploy-и-cicd)
-- [Contributing](#contributing)
-- [FAQ](#faq)
 - [To do](#to-do)
 - [Команда проекта](#команда-проекта)
-
 
 <div id="технологии"></div>
 
 ## Технологии
+
 | Компонент | Технология |
 |-----------|------------|
 | Язык | [Python 3.12+](https://www.python.org/) |
@@ -52,20 +49,140 @@
 <div id="установка"></div>
 
 ## Установка
-Для управления зависимостями в проекте используется [Poetry](https://python-poetry.org).
 
-1. Клонируйте репозиторий:
-```
+```bash
 git clone https://github.com/matt-motik/spcw-aircraft-api.git
-cd sp-oop
-poetry install
+cd spcw-aircraft-api
+poetry install --with dev,lint
+poetry shell
 ```
+
+<div id="конфигурация"></div>
+
+## ⚙️ Конфигурация
+
+Создайте файл `database.ini` в корне проекта:
+
+```ini
+[postgresql]
+host=localhost
+database=sky_db
+user=sky_user
+password=your_password
+port=5432
+```
+
+Для первоначальной инициализации (создание БД и пользователя) создайте `admin.ini`:
+
+```ini
+[postgresql]
+host=localhost
+database=postgres
+user=postgres
+password=admin_password
+port=5432
+```
+
+> ⚠️ **Важно:** Не коммитьте файлы с паролями! Добавьте `*.ini` в `.gitignore`.
+
+<div id="использование"></div>
+
+## 💻 Использование
+
+### Запуск программы
+
+```bash
+poetry run python main.py
+```
+
+1. Выберите хранилище: PostgreSQL или JSON-файл
+2. Дождитесь загрузки данных по 10+ странам
+3. Введите название страны для поиска самолётов
+4. Применяйте фильтры (высота, скорость, координаты, статус)
+5. Получите топ-N самолётов, отсортированных по высоте
+
+### Пример программного использования
+
+```python
+from src.db_manager import DBManager
+from src.aeroplanes_api import AeroplanesAPI
+from src.aeroplane import Aeroplane
+
+db = DBManager()
+db.initialize()
+api = AeroplanesAPI()
+
+bbox = api.get_country_bbox("Germany")
+country_id = db.add_country("Germany", bbox)
+
+raw_planes = api.get_aeroplanes("Germany")
+planes = Aeroplane.cast_to_object_list(raw_planes, country_id=country_id)
+db.add_multiple_aeroplanes(planes)
+
+print(db.get_countries_and_aeroplanes_count())
+print(f"Средняя скорость: {db.get_avg_speed():.1f} м/с")
+fast_planes = db.get_aeroplanes_with_higher_speed(limit=5)
+aca_planes = db.get_aeroplanes_with_keyword("ACA")
+
+db.close()
+```
+
+<div id="структура-таблиц-бд"></div>
+
+## 🗄️ Структура таблиц БД
+
+### `countries`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | `SERIAL PRIMARY KEY` | Уникальный идентификатор |
+| `name` | `VARCHAR(100) UNIQUE NOT NULL` | Название страны |
+| `lat_min` | `FLOAT` | Минимальная широта (юг) |
+| `lat_max` | `FLOAT` | Максимальная широта (север) |
+| `lon_min` | `FLOAT` | Минимальная долгота (запад) |
+| `lon_max` | `FLOAT` | Максимальная долгота (восток) |
+
+### `aeroplanes`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | `SERIAL PRIMARY KEY` | Уникальный идентификатор |
+| `icao24` | `VARCHAR(6) UNIQUE NOT NULL` | Идентификатор транспондера (hex) |
+| `callsign` | `VARCHAR(8)` | Позывной рейса |
+| `origin_country` | `VARCHAR(100)` | Страна регистрации |
+| `longitude` | `FLOAT` | Долгота |
+| `latitude` | `FLOAT` | Широта |
+| `altitude` | `FLOAT` | Барометрическая высота, м |
+| `velocity` | `FLOAT` | Скорость относительно земли, м/с |
+| `on_ground` | `BOOLEAN` | Флаг нахождения на земле |
+| `country_id` | `INTEGER REFERENCES countries(id)` | Страна над которой летит |
+
+<div id="методы-dbmanager"></div>
+
+## 🔧 Методы DBManager
+
+| Метод | Описание |
+|-------|----------|
+| `get_countries_and_aeroplanes_count()` | Список стран + количество самолётов в их воздушном пространстве (JOIN) |
+| `get_all_aeroplanes()` | Все воздушные суда |
+| `get_avg_speed()` | Средняя скорость по всем самолётам |
+| `get_aeroplanes_with_higher_speed(limit=5)` | Топ-N самолётов со скоростью выше средней |
+| `get_aeroplanes_with_keyword(keyword)` | Поиск по подстроке в позывном (`ILIKE`) |
+| `add_aeroplane(aeroplane)` | Добавление / обновление одного самолёта (upsert) |
+| `add_multiple_aeroplanes(aeroplanes)` | Пакетное добавление (1 commit) |
+| `get_aeroplanes(**filters)` | Фильтрация по 11 параметрам |
+| `insert_country(...)` / `add_country(...)` | Добавление страны |
+| `delete_aeroplane(aeroplane)` | Удаление по `icao24` |
+| `close()` | Закрытие соединения |
 
 <div id="разработка"></div>
 
 ## Разработка
+
 <!-- СЕКЦИЯ_AUTO_API: СТАРТ -->
-### 📚 Документация API
+
+<details>
+<summary>📚 Документация API (развёрнуть)</summary>
 
 *Этот раздел генерируется автоматически из docstring.*
 
@@ -229,6 +346,8 @@ poetry install
 
 > 📘 **Полная документация** с примерами и описанием параметров доступна в папке [`docs/api`](docs/api).
 
+</details>
+
 <!-- СЕКЦИЯ_AUTO_API: КОНЕЦ -->
 
 ## 🌐 Внешние API Endpoints
@@ -238,59 +357,16 @@ poetry install
 | Nominatim | `https://nominatim.openstreetmap.org/search` | Bounding box страны |
 | OpenSky | `https://opensky-network.org/api/states/all` | Состояния самолётов |
 
-### Установка зависимостей
-```poetry install```
-### Запуск программы
-```poetry run python main.py```
-
-1. Выберите хранилище: PostgreSQL или JSON-файл
-2. Дождитесь загрузки данных по 10 странам
-3. Введите название страны для поиска самолётов
-4. Применяйте фильтры (высота, скорость, координаты, статус)
-5. Получите топ-N самолётов, отсортированных по высоте
-
-### Настройка PostgreSQL
-
-Убедитесь, что PostgreSQL запущен. Создайте файл конфигурации (см. [Конфигурация](#конфигурация)).
-
-### Инициализация базы данных
-При первом запуске автоматически создаются таблицы `countries` и `aeroplanes`.
-
-## ⚙️ Конфигурация
-
-Создайте файл `database.ini` в корне проекта:
-
-```ini
-[postgresql]
-host=localhost
-database=sky_db
-user=sky_user
-password=your_password
-port=5432
-```
-
-Для первоначальной инициализации (создание БД и пользователя) создайте `admin.ini`:
-
-```ini
-[postgresql]
-host=localhost
-database=postgres
-user=postgres
-password=admin_password
-port=5432
-```
-
-> ⚠️ **Важно:** Не коммитьте файлы с паролями! Добавьте `*.ini` в `.gitignore`.
-
 <div id="тестирование"></div>
 
 ## 🧪 Тестирование
-main.py не тестируется
+
+> `main.py` не тестируется
+
 <!-- СЕКЦИЯ_AUTO_TEST: СТАРТ -->
 
-*Этот раздел генерируется автоматически на основании данных `poetry run pytest`.*
-
-### 📊 Результаты тестов SRC
+<details>
+<summary>📊 Результаты тестов и покрытие (развёрнуть)</summary>
 
 ```
 📈 Покрытие кода:
@@ -314,53 +390,35 @@ src/json_storage.py       130      0   100%
 src/logger_creator.py      15      0   100%
 src/path.py                10      0   100%
 TOTAL                     601      0   100%
-Coverage HTML written to dir htmlcov/src
 
 🎯 Результаты тестов src:
-tests/test_aeroplane.py .............................                    [ 27%]
-tests/test_aeroplanes_api.py ..........                                  [ 37%]
-tests/test_config_reader.py ....                                         [ 41%]
-tests/test_db_initializer.py ....                                        [ 45%]
-tests/test_db_manager.py .................................               [ 76%]
-tests/test_json_storage.py ...................                           [ 95%]
-tests/test_logger_creator.py ..                                          [ 97%]
-tests/test_path.py ...                                                   [100%]
-================================ tests coverage ================================
------------------------------------------------------
------------------------------------------------------
 ============================= 104 passed in 0.24s ==============================
 ```
 
 > 📊 **HTML отчёт покрытия**: [`htmlcov/index.html`](htmlcov/src/index.html)
 
-
+</details>
 
 <!-- СЕКЦИЯ_AUTO_TEST: КОНЕЦ -->
-## Deploy и CI/CD
-В разработке
 
-
-## Contributing
-В разработке — [Contributing.md](./CONTRIBUTING.md).
-
-## FAQ
-В разработке
+<div id="to-do"></div>
 
 ## To do
+
 - [x] Структура проекта, `pyproject.toml`, `README.md`, `.gitignore`, Poetry, линтеры
 - [x] Виртуальное окружение, установка зависимостей через Poetry
-- [x] `readme_gen.py` — скрипт генерации README, и покрытия тестами
-- [x] `lint.ps1` — скрипт литеров, форматеров, типизаторов и др
-- [x] [main.py](main.py) — Точка входа в приложение, , интерактивный режим, выбор хранилища (БД/JSON)
+- [x] `readme_gen.py` — скрипт генерации README и покрытия тестами
+- [x] `lint.ps1` — скрипт линтеров, форматеров, типизаторов и др
+- [x] [main.py](main.py) — Точка входа в приложение, интерактивный режим, выбор хранилища (БД/JSON)
 - [x] [aeroplane.py](src/aeroplane.py) — Модель с валидацией, сериализацией, сравнением
-- [x] [aeroplanes_api.py](src/aeroplanes_api.py) - Модуль для работы с Nominatim + OpenSky API.
-- [x] [base_api.py](src/base_api.py) - Модуль базового класса для работы с внешними API.
-- [x] [base_storage.py](src/base_storage.py) - Модуль базового класса для работы с хранилищем самолётов.
-- [x] [json_storage.py](src/json_storage.py) - Модуль класса для работы с JSON-хранилищем самолётов.
-- [x] [db_manager.py](src/db_manager.py) — Модуль класса для работы с postgres-хранилищем самолётов  5 методов задания + upsert + пакетная вставка
-- [x] [logger_creator.py](src/logger_creator.py) - Модуль реализующий создание логгера.
-- [x] [path.py](src/path.py) - Модуль реализующий работу с путями.
-- [x] [db_initializer.py](src/db_initializer.py), [config_reader.py](src/config_reader.py) — инициализация БД
+- [x] [aeroplanes_api.py](src/aeroplanes_api.py) — Модуль для работы с Nominatim + OpenSky API
+- [x] [base_api.py](src/base_api.py) — Модуль базового класса для работы с внешними API
+- [x] [base_storage.py](src/base_storage.py) — Модуль базового класса для работы с хранилищем самолётов
+- [x] [json_storage.py](src/json_storage.py) — Модуль класса для работы с JSON-хранилищем самолётов
+- [x] [db_manager.py](src/db_manager.py) — Модуль класса для работы с PostgreSQL-хранилищем самолётов: 5 методов задания + upsert + пакетная вставка
+- [x] [logger_creator.py](src/logger_creator.py) — Модуль реализующий создание логгера
+- [x] [path.py](src/path.py) — Модуль реализующий работу с путями
+- [x] [db_initializer.py](src/db_initializer.py), [config_reader.py](src/config_reader.py) — Инициализация БД
 - [x] Логирование важных функций
 - [x] Написать тесты для всей новой функциональности
 - [x] Проверить линтеры (`flake8`, `mypy`, `pydocstyle`, `black`, `isort`)
@@ -368,5 +426,5 @@ tests/test_path.py ...                                                   [100%]
 - [x] Обновить документацию
 
 ## Команда проекта
+
 - Matvey Bakirov — [mabakirov@gmail.com](mailto:mabakirov@gmail.com) — Back-End Engineer
- 
