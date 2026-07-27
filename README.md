@@ -180,7 +180,6 @@ db.close()
 ## Разработка
 
 <!-- СЕКЦИЯ_AUTO_API: СТАРТ -->
-
 <details>
 <summary>📚 Документация API (развёрнуть)</summary>
 
@@ -345,9 +344,7 @@ db.close()
 | | [🔧 get_data_dir](docs/api/path.md#get_data_dir) | Функция для получения пути к папке с данными. |
 
 > 📘 **Полная документация** с примерами и описанием параметров доступна в папке [`docs/api`](docs/api).
-
 </details>
-
 <!-- СЕКЦИЯ_AUTO_API: КОНЕЦ -->
 
 ## 🌐 Внешние API Endpoints
@@ -364,9 +361,9 @@ db.close()
 > `main.py` не тестируется
 
 <!-- СЕКЦИЯ_AUTO_TEST: СТАРТ -->
-
 <details>
 <summary>📊 Результаты тестов и покрытие (развёрнуть)</summary>
+### 📊 Результаты тестов SRC
 
 ```
 📈 Покрытие кода:
@@ -390,15 +387,27 @@ src/json_storage.py       130      0   100%
 src/logger_creator.py      15      0   100%
 src/path.py                10      0   100%
 TOTAL                     601      0   100%
+Coverage HTML written to dir htmlcov/src
 
 🎯 Результаты тестов src:
-============================= 104 passed in 0.24s ==============================
+tests/test_aeroplane.py .............................                    [ 27%]
+tests/test_aeroplanes_api.py ..........                                  [ 37%]
+tests/test_config_reader.py ....                                         [ 41%]
+tests/test_db_initializer.py ....                                        [ 45%]
+tests/test_db_manager.py .................................               [ 76%]
+tests/test_json_storage.py ...................                           [ 95%]
+tests/test_logger_creator.py ..                                          [ 97%]
+tests/test_path.py ...                                                   [100%]
+================================ tests coverage ================================
+-----------------------------------------------------
+-----------------------------------------------------
+============================= 104 passed in 0.25s ==============================
 ```
 
 > 📊 **HTML отчёт покрытия**: [`htmlcov/index.html`](htmlcov/src/index.html)
 
-</details>
 
+</details>
 <!-- СЕКЦИЯ_AUTO_TEST: КОНЕЦ -->
 
 <div id="to-do"></div>
