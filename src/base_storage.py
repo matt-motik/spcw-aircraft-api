@@ -30,6 +30,19 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
+    def add_multiple_aeroplanes(self, aeroplanes: list[Aeroplane]) -> None:
+        """
+        Пакетное добавление/обновление списка самолётов с однократным сохранением.
+
+        Args:
+            aeroplanes: Список объектов Aeroplane.
+
+        Raises:
+            TypeError: Если передан объект не типа List[Aeroplane].
+        """
+        pass
+
+    @abstractmethod
     def get_aeroplanes(self, **filters: dict[str, Any]) -> list[Aeroplane]:
         """
         Возвращает список самолётов, удовлетворяющих заданным фильтрам.
@@ -59,5 +72,52 @@ class BaseStorage(ABC):
 
         Raises:
             ValueError: Если самолёт с таким icao24 не найден в хранилище.
+        """
+        pass
+
+    @abstractmethod
+    def add_country(self, country_name: str, bbox: dict[str, float]) -> int | None:
+        """
+        Добавляет страну в хранилище.
+
+        Returns:
+            id страны или None, если хранилище не поддерживает страны.
+        """
+        pass
+
+    @abstractmethod
+    def get_country(self, country_name: str) -> dict | None:
+        """
+        Получает данные о стране из хранилища.
+
+        Returns:
+            {
+                'id': int,
+                'lat_min': float,
+                'lat_max': float,
+                'lon_min': float,
+                'lon_max': float
+            }
+            или None, если не найдена или не поддерживается.
+        """
+        pass
+
+    @abstractmethod
+    def initialize(self) -> None:
+        """Подготовка хранилища (создание таблиц, файлов и т.д.)."""
+        pass
+
+    @abstractmethod
+    def close(self) -> None:
+        """Закрывает хранилище если поддерживает."""
+        pass
+
+    @abstractmethod
+    def get_aeroplanes_with_keyword(self, keyword: str) -> list[Aeroplane]:
+        """
+        Получает самолёты, в позывном которых содержится keyword.
+
+        Args:
+            keyword: Подстрока для поиска (например, 'AFL').
         """
         pass

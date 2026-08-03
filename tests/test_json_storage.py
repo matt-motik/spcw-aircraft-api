@@ -123,6 +123,16 @@ def test_get_aeroplanes_filters(temp_storage, plane_1, plane_2):
     result = temp_storage.get_aeroplanes(on_ground=False)
     assert len(result) == 2
 
+    # Позывной
+    result = temp_storage.get_aeroplanes(callsign="AFL")
+    assert len(result) == 2
+
+    result = temp_storage.get_aeroplanes_with_keyword("AFL")
+    assert len(result) == 2
+
+    result = temp_storage.get_aeroplanes_with_keyword("")
+    assert len(result) == 0
+
     # Неверный ключ
     with pytest.raises(ValueError):
         temp_storage.get_aeroplanes(invalid_key="test")
@@ -180,3 +190,15 @@ def test_save_os_error(temp_storage, plane_1, monkeypatch):
         temp_storage.add_aeroplane(plane_1)  # вызовет _save, который упадёт
     finally:
         os.chmod(path, stat.S_IWRITE)  # восстанавливаем права для очистки tmp_path
+
+
+def test_add_country(temp_storage):
+    assert temp_storage.add_country("Canada", {}) is None
+
+
+def test_get_country(temp_storage):
+    assert temp_storage.get_country("Canada") is None
+
+
+def test_close(temp_storage):
+    assert temp_storage.close() is None

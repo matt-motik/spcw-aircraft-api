@@ -35,6 +35,10 @@ class JsonStorage(BaseStorage):
 
         logger.info("Хранилище инициализировано, самолётов: %d", len(self._storage))
 
+    def initialize(self) -> None:
+        """JSON-файл создаётся при первом сохранении."""
+        pass
+
     def add_aeroplane(self, aeroplane: Aeroplane) -> None:
         """
         Добавляет запись о самолёте в хранилище.
@@ -107,6 +111,8 @@ class JsonStorage(BaseStorage):
             "max_latitude",
             "min_longitude",
             "max_longitude",
+            "country_id",
+            "callsign",
         }
         for key in filters:
             if key not in valid_keys:
@@ -143,6 +149,12 @@ class JsonStorage(BaseStorage):
         if "max_longitude" in filters:
             max_lon = float(filters["max_longitude"])
             result = [p for p in result if p.longitude is not None and p.longitude <= max_lon]
+        if "country_id" in filters:
+            pass
+        if "callsign" in filters:
+            callsign = str(filters["callsign"]).strip().upper()
+            if callsign:
+                result = [p for p in result if callsign in p.callsign.upper()]
 
         return result
 
@@ -215,3 +227,38 @@ class JsonStorage(BaseStorage):
         except OSError as err:
             logger.error(f"JSON-файл не сохранён. {str(err)}", exc_info=True)
             return
+
+    def add_country(self, country_name: str, bbox: dict[str, float]) -> int | None:
+        """
+        Добавляет страну в хранилище.
+
+        Returns:
+            id страны или None, если хранилище не поддерживает страны.
+        """
+        pass
+
+    def get_country(self, country_name: str) -> dict | None:
+        """
+        Получает данные о стране из хранилища.
+
+        Returns:
+            {
+                'id': int,
+                'lat_min': float,
+                'lat_max': float,
+                'lon_min': float,
+                'lon_max': float
+            }
+            или None, если не найдена или не поддерживается.
+        """
+        pass
+
+    def close(self) -> None:
+        """Закрывает хранилище. Для JSON — ничего не делает."""
+        pass
+
+    def get_aeroplanes_with_keyword(self, keyword: str) -> list[Aeroplane]:
+        """Получает самолёты, в позывном которых содержится keyword."""
+        if not keyword or not keyword.strip():
+            return []
+        return self.get_aeroplanes(callsign=keyword.strip())

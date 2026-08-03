@@ -284,7 +284,8 @@ def update_readme_with_api_table(api_table: str) -> bool:
     docs_path = str(DOCS_OUTPUT_DIR).replace("\\", "/")
 
     new_section = f"""<!-- СЕКЦИЯ_AUTO_API: СТАРТ -->
-### 📚 Документация API
+<details>
+<summary>📚 Документация API (развёрнуть)</summary>
 
 *Этот раздел генерируется автоматически из docstring.*
 
@@ -293,7 +294,7 @@ def update_readme_with_api_table(api_table: str) -> bool:
 {api_table}
 
 > 📘 **Полная документация** с примерами и описанием параметров доступна в папке [`{docs_path}`]({docs_path}).
-
+</details>
 <!-- СЕКЦИЯ_AUTO_API: КОНЕЦ -->"""
 
     if re.search(pattern, content, re.DOTALL):
@@ -323,11 +324,10 @@ def update_readme_with_test_section(test_results: str) -> bool:
     # Используем lambda функцию для замены, чтобы re.sub не интерпретировал test_results
     def replace_section(match: re.Match) -> str:
         return f"""<!-- СЕКЦИЯ_AUTO_TEST: СТАРТ -->
-
-*Этот раздел генерируется автоматически на основании данных `poetry run pytest`.*
-
+<details>
+<summary>📊 Результаты тестов и покрытие (развёрнуть)</summary>
 {test_results}
-
+</details>
 <!-- СЕКЦИЯ_AUTO_TEST: КОНЕЦ -->"""
 
     if re.search(pattern, content, re.DOTALL):
